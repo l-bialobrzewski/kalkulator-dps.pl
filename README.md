@@ -26,9 +26,8 @@ Zero zależności zewnętrznych — jeden plik .html, czysty HTML/CSS/JS
 
 
 Podstawa prawna
-ArtykułTreśćArt. 61 ust. 1Kolejność podmiotów zobowiązanych do odpłatnościArt. 61 ust. 2 pkt 1Opłata pensjonariusza — max 70% dochoduArt. 61 ust. 2 pkt 2Próg dla osób zobowiązanych — 300% kryterium dochodowegoArt. 64Przesłanki fakultatywnego zwolnienia z opłaty (decyzja uznaniowa)Art. 64aZwolnienie obligatoryjne — pozbawienie władzy rodzicielskiej
-Progi dochodowe na podstawie Rozporządzenia Rady Ministrów z dnia 12 lipca 2024 r. (Dz.U. 2024 poz. 1081):
-RokOsoba samotnaOsoba w rodziniePróg 300% (samotna)Próg 300% × n (rodzina)2024776 zł600 zł2 328 zł1 800 zł × n20251 010 zł823 zł3 030 zł2 469 zł × n20261 010 zł823 zł3 030 zł2 469 zł × n
+ArtykułTreśćArt. 61 ust. 1Kolejność podmiotów zobowiązanych do odpłatnościArt. 61 ust. 2 pkt 1Opłata pensjonariusza — max 70% dochoduArt. 61 ust. 2 pkt 2Próg dla osób zobowiązanych — 300% kryterium dochodowegoArt. 64Przesłanki fakultatywnego zwolnienia z opłaty (decyzja uznaniowa)Art. 64a Zwolnienie obligatoryjne — pozbawienie władzy rodzicielskiej
+
 
 Silnik obliczeniowy — algorytm
 1. Opłata pensjonariusza = min(dochód × 0,70 ; koszt DPS)
