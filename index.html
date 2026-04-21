@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta name="description" content="Oblicz kto i ile płaci za pobyt w DPS. Kalkulator odpłatności zgodny z ustawą o pomocy społecznej, progi 2025/2026. Pensjonariusz, rodzina, gmina.">
+<meta name="keywords" content="kalkulator DPS, odpłatność DPS, ile płaci rodzina za DPS, opłata za dom pomocy społecznej, kryterium dochodowe DPS 2025">
+<link rel="canonical" href="https://kalkulator-dps.pl">
+
+<!-- Open Graph (Facebook, LinkedIn) -->
+<meta property="og:title" content="Kalkulator DPS — odpłatność za pobyt w domu pomocy społecznej">
+<meta property="og:description" content="Oblicz kto i ile płaci za pobyt w DPS. Zgodny z art. 61-64a ustawy o pomocy społecznej. Progi 2025/2026.">
+<meta property="og:url" content="https://kalkulator-dps.pl">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pl_PL">
+
+<!-- Dane strukturalne Google (Schema.org) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Kalkulator DPS",
+  "description": "Kalkulator odpłatności za pobyt w domu pomocy społecznej",
+  "url": "https://kalkulator-dps.pl",
+  "applicationCategory": "FinanceApplication",
+  "inLanguage": "pl",
+  "isAccessibleForFree": true,
+  "author": {
+    "@type": "Person",
+    "name": "Łukasz Białobrzewski"
+  }
+}
+</script>
+<title>Kalkulator DPS — odpłatność za pobyt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B3A5C;--navy-light:#2A5080;--navy-pale:#EBF2FA;
+  --terra:#C0572C;--terra-light:#F3E8E3;
+  --green:#1A5C37;--green-light:#E6F2EC;
+  --warn:#8B6914;--warn-light:#FDF6E3;
+  --bg:#F4F1EC;--card:#FFFFFF;
+  --text:#1C2B3A;--muted:#637085;--border:rgba(27,58,92,0.13);
+  --radius:12px;--shadow:0 2px 16px rgba(27,58,92,0.09);
+  --font-head:'Lora',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.6}
+body{min-height:100vh;padding:0 0 4rem}
+
+/* ── HEADER ─────────────────────────────────────────────────────────── */
+.site-header{background:var(--navy);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:12px}
+.site-logo{font-family:var(--font-head);font-size:1.1rem;font-weight:600;color:#fff;letter-spacing:-0.02em}
+.site-logo span{color:#F2A07A}
+.site-tag{font-size:11px;color:rgba(255,255,255,0.55);margin-left:auto;text-align:right;line-height:1.4}
+
+/* ── CONTAINER ───────────────────────────────────────────────────────── */
+.wrap{max-width:680px;margin:0 auto;padding:0 1rem}
+
+/* ── STEPS ───────────────────────────────────────────────────────────── */
+.steps{display:flex;gap:0;margin:2rem 0 1.75rem;counter-reset:step}
+.step-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;cursor:default}
+.step-item:not(:last-child)::after{content:'';position:absolute;top:16px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;transition:background .4s}
+.step-item.done:not(:last-child)::after{background:var(--navy)}
+.step-num{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--muted);position:relative;z-index:1;transition:all .3s}
+.step-item.active .step-num{border-color:var(--navy);background:var(--navy);color:#fff}
+.step-item.done .step-num{border-color:var(--navy);background:var(--navy);color:#fff}
+.step-item.done .step-num::after{content:'✓';font-size:13px}
+.step-item.done .step-num .n{display:none}
+.step-label{font-size:11px;color:var(--muted);margin-top:6px;text-align:center;max-width:80px;line-height:1.3}
+.step-item.active .step-label{color:var(--navy);font-weight:500}
+
+/* ── CARD ────────────────────────────────────────────────────────────── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:1.75rem 1.75rem;margin-bottom:1rem}
+.card-title{font-family:var(--font-head);font-size:1.3rem;font-weight:600;color:var(--navy);margin-bottom:.35rem;letter-spacing:-0.02em}
+.card-sub{font-size:.875rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.5}
+
+/* ── FORM ────────────────────────────────────────────────────────────── */
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.8rem;font-weight:500;color:var(--navy);margin-bottom:.4rem;letter-spacing:.02em;text-transform:uppercase}
+.field input,.field select{width:100%;padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font-body);font-size:.95rem;color:var(--text);background:var(--card);outline:none;transition:border-color .2s,box-shadow .2s;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,58,92,0.1)}
+.field .hint{font-size:.78rem;color:var(--muted);margin-top:.3rem;line-height:1.4}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.field-row{grid-template-columns:1fr}}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231B3A5C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+/* ── PERSON BLOCK ────────────────────────────────────────────────────── */
+.person-block{border:1.5px solid var(--border);border-radius:10px;padding:1.1rem 1.25rem;margin-bottom:.85rem;position:relative;background:var(--bg)}
+.person-head{display:flex;align-items:center;gap:8px;margin-bottom:.9rem}
+.person-badge{background:var(--navy);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.person-title{font-weight:500;font-size:.9rem;color:var(--navy)}
+.person-remove{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:2px 6px;border-radius:4px;line-height:1}
+.person-remove:hover{color:var(--terra);background:var(--terra-light)}
+.exemptions-section{margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--border)}
+.exemptions-label{font-size:.75rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem}
+.checks{display:flex;flex-direction:column;gap:.3rem}
+.checks label{display:flex;gap:.5rem;align-items:flex-start;font-size:.82rem;color:var(--text);cursor:pointer;line-height:1.4}
+.checks input[type=checkbox]{margin-top:2px;accent-color:var(--navy);flex-shrink:0;width:15px;height:15px}
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:.7rem 1.4rem;border-radius:8px;font-family:var(--font-body);font-size:.9rem;font-weight:500;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--navy)}
+.btn-outline:hover{background:var(--navy-pale)}
+.btn-add{background:var(--navy-pale);color:var(--navy);border:1.5px dashed rgba(27,58,92,0.3);width:100%;justify-content:center;padding:.65rem}
+.btn-add:hover{background:var(--navy);color:#fff;border-style:solid}
+.btn-row{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap}
+.btn-print{background:none;border:1.5px solid var(--border);color:var(--muted);font-size:.82rem;padding:.5rem 1rem;border-radius:7px;cursor:pointer;font-family:var(--font-body)}
+.btn-print:hover{border-color:var(--navy);color:var(--navy)}
+
+/* ── RESULTS ─────────────────────────────────────────────────────────── */
+.results-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+@media(max-width:440px){.results-summary{grid-template-columns:1fr}}
+.summary-cell{border-radius:10px;padding:1rem;text-align:center}
+.summary-cell .s-lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;font-weight:500;margin-bottom:.3rem}
+.summary-cell .s-val{font-family:var(--font-head);font-size:1.35rem;font-weight:600;letter-spacing:-0.02em}
+.summary-cell .s-sub{font-size:.73rem;margin-top:.2rem;opacity:.75;line-height:1.3}
+.c-resident{background:var(--navy-pale);color:var(--navy)}
+.c-family{background:#F0EAF5;color:#4A1D7C}
+.c-municipality{background:var(--green-light);color:var(--green)}
+
+/* ── BAR ─────────────────────────────────────────────────────────────── */
+.bar-wrap{margin:1.25rem 0;border-radius:8px;overflow:hidden;height:20px;display:flex}
+.bar-seg{height:100%;transition:width .8s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#fff;overflow:hidden;white-space:nowrap}
+.bar-resident{background:var(--navy)}
+.bar-family{background:#7C3ABD}
+.bar-municipality{background:var(--green)}
+
+/* ── DETAIL ROWS ─────────────────────────────────────────────────────── */
+.detail-section{margin-top:1.25rem}
+.detail-title{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;font-weight:500;color:var(--muted);margin-bottom:.6rem}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.88rem;gap:1rem}
+.detail-row:last-child{border-bottom:none}
+.detail-row .d-label{color:var(--text);flex:1;line-height:1.4}
+.detail-row .d-val{font-weight:500;color:var(--navy);white-space:nowrap}
+.detail-row .d-muted{color:var(--muted);font-size:.8rem}
+
+/* ── PERSON RESULT ────────────────────────────────────────────────────── */
+.person-result{border:1px solid var(--border);border-radius:9px;padding:1rem 1.1rem;margin-bottom:.7rem}
+.person-result.no-pay{opacity:.7}
+.person-result-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.person-result-name{font-weight:500;font-size:.9rem;color:var(--navy)}
+.person-result-amount{font-family:var(--font-head);font-size:1.1rem;font-weight:600}
+.amount-pay{color:var(--terra)}
+.amount-nopay{color:var(--green)}
+.person-result-detail{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* ── ALERT BOXES ─────────────────────────────────────────────────────── */
+.alert{border-radius:8px;padding:.85rem 1.1rem;font-size:.83rem;line-height:1.5;margin:.75rem 0}
+.alert strong{display:block;margin-bottom:.2rem;font-size:.85rem}
+.alert-warn{background:var(--warn-light);border:1px solid rgba(139,105,20,0.25);color:var(--warn)}
+.alert-info{background:var(--navy-pale);border:1px solid rgba(27,58,92,0.18);color:var(--navy)}
+.alert-success{background:var(--green-light);border:1px solid rgba(26,92,55,0.25);color:var(--green)}
+.alert-terra{background:var(--terra-light);border:1px solid rgba(192,87,44,0.25);color:var(--terra)}
+
+/* ── DISCLAIMER ──────────────────────────────────────────────────────── */
+.disclaimer{font-size:.77rem;color:var(--muted);line-height:1.5;margin-top:.75rem;padding:.75rem 1rem;border-left:3px solid var(--border);background:var(--bg)}
+
+/* ── FOOTER ──────────────────────────────────────────────────────────── */
+.site-footer{margin-top:2.5rem;padding:1.5rem;text-align:center;font-size:.78rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--border)}
+.legal-ref{font-size:.74rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.5rem .85rem;color:var(--muted);margin-top:.75rem;display:inline-block}
+
+@media print{.btn,.btn-row,.steps,.site-header .site-tag{display:none!important}.wrap{max-width:100%}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-logo">kalkulator<span>DPS</span>.pl</div>
+  <div class="site-tag">Odpłatność za pobyt<br>w domu pomocy społecznej</div>
+</header>
+
+<div class="wrap">
+
+  <!-- STEPS -->
+  <div class="steps" id="steps">
+    <div class="step-item active" id="si-1">
+      <div class="step-num"><span class="n">1</span></div>
+      <div class="step-label">Dane podstawowe</div>
+    </div>
+    <div class="step-item" id="si-2">
+      <div class="step-num"><span class="n">2</span></div>
+      <div class="step-label">Osoby zobowiązane</div>
+    </div>
+    <div class="step-item" id="si-3">
+      <div class="step-num"><span class="n">3</span></div>
+      <div class="step-label">Wyniki</div>
+    </div>
+  </div>
+
+  <!-- ── KROK 1 ─────────────────────────────────────────────────────── -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-title">Dane podstawowe</div>
+      <div class="card-sub">Wprowadź koszt pobytu w DPS oraz dochód pensjonariusza. Kalkulator oblicza odpłatność zgodnie z art. 61 ustawy o pomocy społecznej.</div>
+
+      <div class="field">
+        <label>Rok obliczeniowy</label>
+        <select id="year">
+          <option value="2025" selected>2025 — kryterium: 1 010 zł (osoba samotna) / 823 zł (rodzina)</option>
+          <option value="2026">2026 — kryterium: 1 010 zł (osoba samotna) / 823 zł (rodzina)</option>
+          <option value="2024">2024 — kryterium: 776 zł (osoba samotna) / 600 zł (rodzina)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Średni miesięczny koszt utrzymania w DPS [zł]</label>
+        <input type="number" id="dpsCost" placeholder="np. 7000" min="1000" max="20000" step="1" inputmode="numeric">
+        <div class="hint">Kwotę znajdziesz w decyzji kierującej lub w BIP placówki. Średnia krajowa (03.2025): 7 024 zł.</div>
+      </div>
+
+      <div class="field">
+        <label>Miesięczny dochód netto pensjonariusza [zł]</label>
+        <input type="number" id="residentIncome" placeholder="np. 2420" min="0" max="50000" step="1" inputmode="numeric">
+        <div class="hint">Emerytura, renta lub inne świadczenia netto (po odliczeniu podatku i składki zdrowotnej). Nie wliczaj majątku.</div>
+      </div>
+
+      <div id="step1-preview" class="alert alert-info" style="display:none"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep2()">Dalej &rarr;</button>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong style="display:block;margin-bottom:.2rem;font-weight:500">Podstawa prawna</strong>
+      Ustawa z dnia 12 marca 2004 r. o pomocy społecznej (Dz.U. z 2024 r. poz. 1283). Art. 61–64a. Progi dochodowe: Rozporządzenie Rady Ministrów z dnia 12 lipca 2024 r. (Dz.U. 2024 poz. 1081).
+    </div>
+  </div>
+
+  <!-- ── KROK 2 ─────────────────────────────────────────────────────── -->
+  <div id="step2" style="display:none">
+    <div class="card">
+      <div class="card-title">Osoby zobowiązane</div>
+      <div class="card-sub">Dodaj małżonka i/lub dzieci (zstępnych), którzy mogą być zobowiązani do dopłaty. Kolejność ma znaczenie — art. 61 ust. 1 pkt 2.</div>
+
+      <div id="persons-list"></div>
+
+      <button class="btn btn-add" onclick="addPerson()" id="addPersonBtn">
+        + Dodaj osobę zobowiązaną
+      </button>
+
+      <div class="alert alert-info" style="margin-top:1rem">
+        <strong>Kiedy rodzina nie płaci?</strong>
+        Jeśli dochód osoby zobowiązanej nie przekracza 300% kryterium dochodowego (w 2025 r.: 3 030 zł dla osoby samotnej lub 2 469 zł × liczba osób w rodzinie), opłata wynosi 0 zł.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="goStep1()">&larr; Wróć</button>
+        <button class="btn btn-primary" onclick="goStep3()">Oblicz &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KROK 3 ─────────────────────────────────────────────────────── -->
+  <div id="step3" style="display:none">
+    <div class="card" id="results-card">
+      <!-- wypełniane przez JS -->
+    </div>
+    <div class="btn-row" style="margin-top:.5rem">
+      <button class="btn-print" onclick="window.print()">&#128438; Drukuj / Zapisz PDF</button>
+      <button class="btn btn-outline" onclick="goStep2()">&larr; Wróć</button>
+      <button class="btn btn-primary" onclick="resetAll()">Nowe obliczenie</button>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer class="site-footer">
+  Kalkulator ma charakter edukacyjny i szacunkowy.<br>
+  Decyzję administracyjną w sprawie odpłatności podejmuje właściwy MOPS/OPS.<br>
+  <span class="legal-ref">Art. 61–64a ustawy z 12.03.2004 r. o pomocy społecznej &nbsp;|&nbsp; Dz.U. 2024 poz. 1283</span>
+</footer>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────
+// DANE KONFIGURACYJNE
+// ──────────────────────────────────────────────────────────────────────────
+const THRESHOLDS = {
+  2024: { single: 776,  family: 600  },
+  2025: { single: 1010, family: 823  },
+  2026: { single: 1010, family: 823  },
+};
+
+let personCount = 0;
+
+// ──────────────────────────────────────────────────────────────────────────
+// SILNIK OBLICZENIOWY
+// ──────────────────────────────────────────────────────────────────────────
+function getThreshold(householdType, memberCount, year) {
+  const t = THRESHOLDS[year] || THRESHOLDS[2025];
+  return householdType === 'single'
+    ? t.single * 3
+    : t.family * 3 * Math.max(1, memberCount);
+}
+
+function calcResident(income, dpsCost) {
+  const fee    = round(Math.min(income * 0.7, dpsCost));
+  const gap    = round(Math.max(0, dpsCost - fee));
+  return { fee, remainder: round(income - fee), coversFull: gap === 0, gap };
+}
+
+function calcPerson(p, remainingGap, year) {
+  const threshold  = round(getThreshold(p.type, p.members, year));
+  const exceeds    = p.income > threshold;
+  if (!exceeds) return { ...p, threshold, exceeds, maxContrib: 0, contribution: 0 };
+  const maxContrib = round(p.income - threshold);
+  const contribution = round(Math.min(maxContrib, remainingGap));
+  return { ...p, threshold, exceeds, maxContrib, contribution };
+}
+
+function calcAll(inputs) {
+  const resident = calcResident(inputs.residentIncome, inputs.dpsCost);
+  if (resident.coversFull) return { resident, persons: [], family: 0, municipality: 0 };
+  let gap = resident.gap;
+  const persons = [];
+  for (const p of inputs.persons) {
+    if (gap <= 0) { persons.push({ ...p, threshold: round(getThreshold(p.type, p.members, inputs.year)), exceeds: false, contribution: 0, maxContrib: 0 }); continue; }
+    const r = calcPerson(p, gap, inputs.year);
+    persons.push(r);
+    gap = round(Math.max(0, gap - r.contribution));
+  }
+  const family = round(persons.reduce((s, p) => s + p.contribution, 0));
+  return { resident, persons, family, municipality: round(gap) };
+}
+
+function round(v) { return Math.round(v * 100) / 100; }
+function pln(v)   { return v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'; }
+
+// ──────────────────────────────────────────────────────────────────────────
+// NAWIGACJA KROKÓW
+// ──────────────────────────────────────────────────────────────────────────
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).style.display = (i===n) ? '' : 'none';
+    const si = document.getElementById('si-'+i);
+    si.className = 'step-item' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goStep1() { setStep(1); }
+
+function goStep2() {
+  const cost   = parseFloat(document.getElementById('dpsCost').value);
+  const income = parseFloat(document.getElementById('residentIncome').value);
+  const year   = parseInt(document.getElementById('year').value);
+  if (!cost || cost <= 0)   { alert('Proszę wpisać koszt pobytu w DPS (np. 7000).'); return; }
+  if (isNaN(income) || income < 0) { alert('Proszę wpisać dochód pensjonariusza.'); return; }
+  // Preview
+  const r = calcResident(income, cost);
+  const el = document.getElementById('step1-preview');
+  el.style.display = '';
+  el.innerHTML = r.coversFull
+    ? `<strong>Pensjonariusz pokrywa pełny koszt.</strong> Opłata: ${pln(r.fee)} (70% dochodu ≥ koszt DPS). Rodzina i gmina nie dopłacają.`
+    : `<strong>Opłata pensjonariusza: ${pln(r.fee)}</strong> (70% dochodu). Pozostaje do pokrycia: ${pln(r.gap)}. Przejdź dalej, aby dodać osoby zobowiązane.`;
+  setStep(2);
+}
+
+function goStep3() {
+  const inputs = getInputs();
+  if (!inputs) return;
+  const results = calcAll(inputs);
+  renderResults(inputs, results);
+  setStep(3);
+}
+
+function resetAll() {
+  document.getElementById('dpsCost').value = '';
+  document.getElementById('residentIncome').value = '';
+  document.getElementById('step1-preview').style.display = 'none';
+  document.getElementById('persons-list').innerHTML = '';
+  personCount = 0;
+  setStep(1);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// OSOBY ZOBOWIĄZANE
+// ──────────────────────────────────────────────────────────────────────────
+function addPerson() {
+  if (personCount >= 5) { alert('Maksymalnie 5 osób zobowiązanych.'); return; }
+  personCount++;
+  const id = personCount;
+  const div = document.createElement('div');
+  div.className = 'person-block';
+  div.id = 'person-' + id;
+  div.innerHTML = `
+    <div class="person-head">
+      <div class="person-badge">${id}</div>
+      <div class="person-title">Osoba zobowiązana #${id}</div>
+      <button class="person-remove" onclick="removePerson(${id})" title="Usuń">×</button>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Relacja</label>
+        <select id="label-${id}">
+          <option value="Małżonek">Małżonek / małżonka</option>
+          <option value="Dziecko">Dziecko (zstępny)</option>
+          <option value="Rodzic">Rodzic (wstępny)</option>
+          <option value="Inna osoba">Inna osoba</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dochód netto / mies. [zł]</label>
+        <input type="number" id="income-${id}" placeholder="np. 4500" min="0" step="1" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Typ gospodarstwa</label>
+        <select id="type-${id}" onchange="toggleMembers(${id})">
+          <option value="single">Osoba samotnie gospodarująca</option>
+          <option value="family">Osoba w rodzinie (wieloosobowe)</option>
+        </select>
+      </div>
+      <div class="field" id="members-field-${id}" style="display:none">
+        <label>Liczba osób w rodzinie</label>
+        <input type="number" id="members-${id}" value="2" min="2" max="12" step="1" inputmode="numeric">
+      </div>
+    </div>
+    <div class="exemptions-section">
+      <div class="exemptions-label">Przesłanki do zwolnienia (art. 64) — zaznacz jeśli dotyczą</div>
+      <div class="checks">
+        <label><input type="checkbox" id="ex1-${id}"> Płaci za pobyt innego członka rodziny w DPS lub ośrodku wsparcia</label>
+        <label><input type="checkbox" id="ex2-${id}"> Długotrwała choroba, bezrobocie lub niepełnosprawność</label>
+        <label><input type="checkbox" id="ex3-${id}"> Utrzymuje się z jednego świadczenia / wynagrodzenia razem z małżonkiem</label>
+        <label><input type="checkbox" id="ex4-${id}"> Ciąża lub samotne wychowywanie dziecka</label>
+        <label><input type="checkbox" id="ex5-${id}"> Sąd pozbawił pensjonariusza władzy rodzicielskiej nad tą osobą (zw. obligatoryjne)</label>
+      </div>
+    </div>`;
+  document.getElementById('persons-list').appendChild(div);
+  document.getElementById('addPersonBtn').style.display = personCount >= 5 ? 'none' : '';
+}
+
+function removePerson(id) {
+  const el = document.getElementById('person-' + id);
+  if (el) el.remove();
+  document.getElementById('addPersonBtn').style.display = '';
+}
+
+function toggleMembers(id) {
+  const val = document.getElementById('type-' + id).value;
+  document.getElementById('members-field-' + id).style.display = val === 'family' ? '' : 'none';
+}
+
+function getInputs() {
+  const cost   = parseFloat(document.getElementById('dpsCost').value);
+  const income = parseFloat(document.getElementById('residentIncome').value);
+  const year   = parseInt(document.getElementById('year').value);
+  if (!cost || isNaN(income)) { alert('Brakuje danych z kroku 1.'); return null; }
+  const persons = [];
+  for (let i = 1; i <= personCount; i++) {
+    const incEl = document.getElementById('income-' + i);
+    if (!incEl) continue;
+    const pIncome = parseFloat(incEl.value);
+    if (isNaN(pIncome) || pIncome < 0) { alert(`Wprowadź poprawny dochód dla osoby #${i}.`); return null; }
+    const type    = document.getElementById('type-' + i).value;
+    const members = type === 'family' ? (parseInt(document.getElementById('members-' + i).value) || 2) : 1;
+    const label   = document.getElementById('label-' + i).value;
+    const exemptions = {
+      e1: document.getElementById('ex1-' + i).checked,
+      e2: document.getElementById('ex2-' + i).checked,
+      e3: document.getElementById('ex3-' + i).checked,
+      e4: document.getElementById('ex4-' + i).checked,
+      mandatory: document.getElementById('ex5-' + i).checked,
+    };
+    persons.push({ id: i, label, income: pIncome, type, members, exemptions });
+  }
+  return { year, dpsCost: cost, residentIncome: income, persons };
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// RENDEROWANIE WYNIKÓW
+// ──────────────────────────────────────────────────────────────────────────
+function renderResults(inputs, res) {
+  const total  = inputs.dpsCost;
+  const pctR   = Math.round((res.resident.fee  / total) * 100);
+  const pctF   = Math.round((res.family        / total) * 100);
+  const pctM   = Math.round((res.municipality  / total) * 100);
+
+  let personHTML = '';
+  for (const p of res.persons) {
+    const excList = [];
+    if (p.exemptions.e1) excList.push('Płaci za innego członka rodziny w placówce');
+    if (p.exemptions.e2) excList.push('Choroba / bezrobocie / niepełnosprawność');
+    if (p.exemptions.e3) excList.push('Jedno świadczenie z małżonkiem');
+    if (p.exemptions.e4) excList.push('Ciąża / samotne wychowywanie dziecka');
+    const mandatory = p.exemptions.mandatory;
+    const hasExc = excList.length > 0 || mandatory;
+    const pays = !mandatory && p.contribution > 0;
+
+    let excNote = '';
+    if (mandatory) {
+      excNote = `<div class="alert alert-success" style="margin-top:.5rem;font-size:.78rem">Zwolnienie obligatoryjne (art. 64a) — organ musi zwolnić z opłaty na wniosek.</div>`;
+    } else if (hasExc) {
+      excNote = `<div class="alert alert-warn" style="margin-top:.5rem;font-size:.78rem"><strong>Przesłanki do wniosku o zwolnienie (art. 64):</strong>${excList.map(e=>'<br>• '+e).join('')}<br>Wniosek składa się w MOPS po przeprowadzeniu wywiadu środowiskowego. Decyzja ma charakter uznaniowy.</div>`;
+    }
+
+    const typeLabel = p.type === 'single' ? 'osoba samotna' : `rodzina ${p.members}-os.`;
+    const threshInfo = p.type === 'single'
+      ? `Próg: ${pln(p.threshold)} (300% kryterium dla osoby samotnej)`
+      : `Próg: ${pln(p.threshold)} (300% × ${p.members} osób × kryterium rodzinne)`;
+
+    personHTML += `
+      <div class="person-result ${pays ? '' : 'no-pay'}">
+        <div class="person-result-head">
+          <div class="person-result-name">#${p.id} ${p.label} <span style="font-weight:300;color:var(--muted)">(${typeLabel})</span></div>
+          <div class="person-result-amount ${pays ? 'amount-pay' : 'amount-nopay'}">${pln(mandatory ? 0 : p.contribution)}</div>
+        </div>
+        <div class="person-result-detail">
+          Dochód: ${pln(p.income)} &nbsp;|&nbsp; ${threshInfo}<br>
+          ${mandatory ? '<strong>Zwolnienie obligatoryjne</strong> — opłata 0 zł.' :
+            p.exceeds
+              ? `Przekracza próg o ${pln(p.maxContrib)} → dopłata: ${pln(p.contribution)}`
+              : `Dochód poniżej lub równy progowi → <strong>nie płaci</strong>.`}
+        </div>
+        ${excNote}
+      </div>`;
+  }
+
+  if (res.persons.length === 0) {
+    personHTML = res.resident.coversFull
+      ? `<div class="alert alert-success">Pensjonariusz pokrywa pełny koszt — rodzina i gmina nie są zobowiązane do dopłaty (art. 61 ust. 1 pkt 2 i 3).</div>`
+      : `<div class="alert alert-info">Nie dodano osób zobowiązanych. Gmina pokrywa brakującą kwotę w całości.</div>`;
+  }
+
+  const resNote = res.resident.coversFull
+    ? `<span style="color:var(--green)">Pokrywa pełny koszt — rodzina i gmina nie płacą.</span>`
+    : `Pozostaje 30% dochodu: ${pln(res.resident.remainder)}`;
+
+  document.getElementById('results-card').innerHTML = `
+    <div class="card-title">Wynik kalkulacji</div>
+    <div class="card-sub">Rok: <strong>${inputs.year}</strong> &nbsp;|&nbsp; Koszt DPS: <strong>${pln(inputs.dpsCost)}</strong> / miesiąc</div>
+
+    <div class="results-summary">
+      <div class="summary-cell c-resident">
+        <div class="s-lbl">Pensjonariusz</div>
+        <div class="s-val">${pln(res.resident.fee)}</div>
+        <div class="s-sub">${pctR}% kosztu</div>
+      </div>
+      <div class="summary-cell c-family">
+        <div class="s-lbl">Rodzina</div>
+        <div class="s-val">${pln(res.family)}</div>
+        <div class="s-sub">${pctF}% kosztu</div>
+      </div>
+      <div class="summary-cell c-municipality">
+        <div class="s-lbl">Gmina</div>
+        <div class="s-val">${pln(res.municipality)}</div>
+        <div class="s-sub">${pctM}% kosztu</div>
+      </div>
+    </div>
+
+    <div class="bar-wrap">
+      <div class="bar-seg bar-resident" style="width:${pctR}%">${pctR > 8 ? pctR+'%' : ''}</div>
+      <div class="bar-seg bar-family"   style="width:${pctF}%">${pctF > 8 ? pctF+'%' : ''}</div>
+      <div class="bar-seg bar-municipality" style="width:${pctM}%">${pctM > 8 ? pctM+'%' : ''}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title">Szczegóły — pensjonariusz</div>
+      <div class="detail-row"><div class="d-label">Dochód miesięczny</div><div class="d-val">${pln(inputs.residentIncome)}</div></div>
+      <div class="detail-row"><div class="d-label">Opłata (max 70% dochodu, art. 61 ust. 2 pkt 1)</div><div class="d-val">${pln(res.resident.fee)}</div></div>
+      <div class="detail-row"><div class="d-label">Dochód po opłacie</div><div class="d-val d-muted">${resNote}</div></div>
+    </div>
+
+    ${res.persons.length > 0 ? `<div class="detail-section"><div class="detail-title">Osoby zobowiązane (art. 61 ust. 1 pkt 2)</div>${personHTML}</div>` : personHTML}
+
+    ${res.municipality > 0 ? `
+    <div class="detail-section">
+      <div class="detail-title">Udział gminy (art. 61 ust. 1 pkt 3)</div>
+      <div class="detail-row"><div class="d-label">Gmina pokrywa różnicę między kosztem DPS a sumą opłat mieszkańca i rodziny</div><div class="d-val" style="color:var(--green)">${pln(res.municipality)}</div></div>
+    </div>` : ''}
+
+    <div class="disclaimer" style="margin-top:1.25rem">
+      <strong>Zastrzeżenie prawne:</strong> Wynik ma charakter szacunkowy i edukacyjny. Rzeczywistą wysokość opłat ustala organ administracyjny (MOPS/OPS) w decyzji administracyjnej na podstawie wywiadu środowiskowego. Na ostateczną kwotę wpływają m.in.: zaległości za poprzednie okresy, uznaniowe zwolnienia oraz inne okoliczności nieuchwycone przez kalkulator. W przypadku wątpliwości lub sporu z organem — skonsultuj się z radcą prawnym lub złóż odwołanie do SKO.
+    </div>`;
+}
+</script>
+</body>
+</html>
