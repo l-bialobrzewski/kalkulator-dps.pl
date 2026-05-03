@@ -1,81 +1,125 @@
-kalkulator-dps.pl
+# Kalkulator DPS 2.0
 
-Kalkulator odpłatności za pobyt w Domu Pomocy Społecznej — zgodny z ustawą z dnia 12 marca 2004 r. o pomocy społecznej (art. 61–64a).
+Kalkulator odpłatności za pobyt w domu pomocy społecznej. Wersja 2.0 rozdziela aplikację na osobne pliki `index.html`, `styles.css` i `app.js`, dodaje scenariusze best/worst case, scoring sytuacji, heurystyczny procent szans na zwolnienie oraz regułową interpretację AI.
 
+Stan prawny sprawdzony: 2026-05-03.
 
-Opis projektu
-Narzędzie webowe do szacowania podziału odpłatności za pobyt w DPS między trzech zobowiązanych:
+## Pliki
 
-pensjonariusza (max 70% dochodu netto, art. 61 ust. 2 pkt 1),
-osoby zobowiązane (małżonek, dzieci, rodzice — ponad 300% kryterium dochodowego),
-gminę (pokrywa pozostałą różnicę, art. 61 ust. 1 pkt 3).
+- `index.html` - semantyczny frontend, SEO, Open Graph i JSON-LD.
+- `styles.css` - responsywny interfejs kalkulatora.
+- `app.js` - logika prawna, scenariusze, scoring, interpretacja, eksport JSON.
+- `openapi.yaml` - specyfikacja przyszłego API obliczeniowego.
+- `LLM_REVIEW_PROMPT.md` - gotowy prompt do sprawdzenia projektu w Gemini, Mistral, Bieliku lub innym LLM.
 
-Kalkulator ma charakter edukacyjny i szacunkowy. Ostateczną wysokość odpłatności ustala organ administracyjny (MOPS/OPS) w decyzji administracyjnej po przeprowadzeniu wywiadu środowiskowego.
+## Audyt wersji poprzedniej
 
-Funkcje
+### Frontend
 
-Obsługa lat 2024, 2025, 2026 z poprawnymi progami dochodowymi (Rozporządzenie RM z 12.07.2024, Dz.U. 2024 poz. 1081)
-Dodawanie do 5 osób zobowiązanych z możliwością wyboru relacji (małżonek, dziecko, rodzic, inna)
-Rozróżnienie gospodarstw jednoosobowych i wieloosobowych (próg proporcjonalny do liczby osób)
-Detekcja przesłanek do zwolnienia (art. 64) — choroba, bezrobocie, ciąża, samotne wychowywanie dziecka itd.
-Detekcja zwolnienia obligatoryjnego (art. 64a) — pozbawienie władzy rodzicielskiej
-Wizualizacja podziału odpłatności (wykres słupkowy, komórki zbiorcze)
-Eksport wyników przez Drukuj / Zapisz PDF (natywny dialog drukowania)
-W pełni responsywny (mobile-first, breakpoint 480px)
-Zero zależności zewnętrznych — jeden plik .html, czysty HTML/CSS/JS
+Poprzednia wersja była funkcjonalnym prototypem, ale miała kilka ograniczeń: część wariantów była w jednym pliku HTML, widoczne było ryzyko problemów z kodowaniem znaków, logika była spięta z inline-handlerami `onclick`, a wynik był prezentowany bardziej jako prosty kalkulator niż narzędzie decyzyjne. Wersja 2.0 rozdziela warstwy, poprawia semantykę, formularze, responsywność, drukowanie wyniku i eksport JSON.
 
+### Logika prawna
 
-Podstawa prawna
-ArtykułTreśćArt. 61 ust. 1Kolejność podmiotów zobowiązanych do odpłatnościArt. 61 ust. 2 pkt 1Opłata pensjonariusza — max 70% dochoduArt. 61 ust. 2 pkt 2Próg dla osób zobowiązanych — 300% kryterium dochodowegoArt. 64Przesłanki fakultatywnego zwolnienia z opłaty (decyzja uznaniowa)Art. 64a Zwolnienie obligatoryjne — pozbawienie władzy rodzicielskiej
+Wersja 2.0 uwzględnia:
 
+- art. 60: pobyt w DPS jest odpłatny do wysokości średniego miesięcznego kosztu utrzymania,
+- art. 61: kolejność odpłatności: mieszkaniec, małżonek, zstępni przed wstępnymi, gmina,
+- limit mieszkańca: maksymalnie 70% dochodu,
+- próg rodziny: opłata tylko nadwyżką ponad 300% właściwego kryterium dochodowego,
+- art. 64: uznaniowe zwolnienie częściowe lub całkowite,
+- art. 64a: obligatoryjne zwolnienie po spełnieniu przesłanek i złożeniu wniosku,
+- art. 64b: szczególna przesłanka dla wskazanych grup mieszkańców,
+- scenariusz proceduralny dla ryzyka braku wywiadu lub umowy.
 
-Silnik obliczeniowy — algorytm
-1. Opłata pensjonariusza = min(dochód × 0,70 ; koszt DPS)
-2. Luka = max(0 ; koszt DPS − opłata pensjonariusza)
-3. Dla każdej osoby zobowiązanej (iteracja po kolejności wprowadzenia):
-     próg = 300% × kryterium × [1 | liczba osób w rodzinie]
-     jeśli dochód osoby > próg:
-       max_wkład = dochód osoby − próg
-       wkład = min(max_wkład ; pozostała_luka)
-       pozostała_luka -= wkład
-4. Udział gminy = pozostała_luka po uwzględnieniu wszystkich osób zobowiązanych
+Źródła:
 
-Struktura projektu
-kalkulator-dps.html   # Cały projekt — jeden samowystarczalny plik
-README.md             # Ten plik
+- Ustawa o pomocy społecznej, tekst ujednolicony: <https://eli.gov.pl/api/acts/DU/2025/1214/text/U/D20251214Lj.pdf>
+- Rozporządzenie RM z 12 lipca 2024 r. w sprawie kryteriów dochodowych: <https://eli.gov.pl/eli/DU/2024/1044/ogl>
+- Komunikat MRPiPS o kryteriach 2025: <https://www.gov.pl/web/rodzina/powiekszy-sie-grupa-osob-uprawnionych-do-wsparcia-rzad-przyjal-rozporzadzenie-o-kryteriach-dochodowych-w-pomocy-spolecznej2>
 
-Uruchomienie
-Brak serwera, brak instalacji. Otwórz plik bezpośrednio w przeglądarce:
-bash# Lokalne uruchomienie
-open kalkulator-dps.html          # macOS
-start kalkulator-dps.html         # Windows
-xdg-open kalkulator-dps.html      # Linux
-Lub umieść plik na dowolnym hostingu statycznym (GitHub Pages, Cloudflare Pages, Netlify, własny serwer Apache/Nginx).
+## Założenia obliczeniowe
 
-Stos technologiczny
-WarstwaTechnologiaMarkupHTML5StylizacjaCSS3 (Custom Properties, Grid, Flexbox)LogikaVanilla JavaScript (ES6+)CzcionkiGoogle Fonts — Lora (nagłówki), DM Sans (treść)Dependencjebrak
+1. Mieszkaniec płaci `min(70% dochodu skorygowanego, koszt DPS)`.
+2. Jeżeli wskazano dochód objęty ulgą terapeutyczną, kalkulator obniża podstawę dochodu mieszkańca o 50% tej kwoty.
+3. Po opłacie mieszkańca pozostaje luka do pokrycia.
+4. Osoby zobowiązane są sortowane według rangi: małżonek, zstępni, wstępni, osoba dobrowolna.
+5. W tej samej grupie kalkulator rozdziela opłatę proporcjonalnie do zdolności płatniczej, a nie według kolejności wpisania.
+6. Dla osoby samotnej zdolność płatnicza to nadwyżka ponad `3 * kryterium osoby samotnej`.
+7. Dla osoby w rodzinie zdolność płatnicza to nadwyżka dochodu gospodarstwa ponad `3 * kryterium rodzinne * liczba osób`.
+8. Art. 64 i 64a nie zwiększają automatycznie opłat innych osób w scenariuszu best case; różnicę przejmuje gmina.
 
-Ograniczenia i zastrzeżenia
+## Scoring i procent szans na zwolnienie
 
-Kalkulator nie uwzględnia zaległości z poprzednich okresów.
-Zwolnienia z art. 64 mają charakter uznaniowy — decyzja należy do organu po wywiadzie środowiskowym.
-Kolejność osób zobowiązanych wprowadzona przez użytkownika ma znaczenie dla wyliczenia wkładu każdej z nich (algorytm sekwencyjny).
-Wynik nie zastępuje decyzji administracyjnej MOPS/OPS ani porady prawnej. W przypadku sporu zalecane jest odwołanie do SKO lub konsultacja z radcą prawnym.
+Procent szans jest heurystyką produktową, nie predykcją administracyjną. Kalkulator przyznaje punkty za przesłanki z art. 64/64a, jakość dokumentów i presję dochodową po opłacie.
 
+Interpretacja scoringu:
 
-Planowany rozwój
+- `100%` - zwolnienie obligatoryjne art. 64a, jeśli dokumenty są prawdziwe i złożono wniosek.
+- `78-92%` - bardzo wysoka szansa uznaniowa.
+- `62-77%` - wysoka szansa.
+- `45-61%` - średnia szansa.
+- `30-44%` - niska/średnia szansa.
+- `<30%` - niska szansa.
 
- Obsługa lat 2027+ (automatyczna aktualizacja progów po nowelizacji rozporządzenia)
- Eksport do PDF po stronie klienta (bez dialogu drukowania)
- Tryb porównawczy — zestawienie wielu scenariuszy równolegle
- Kalkulator odwrotny — wyliczenie dochodu granicznego dla danego kosztu DPS
- API / wersja backend (Node.js / Python) do integracji z systemami DPS
+Wynik powinien być traktowany jako lista argumentów do rozmowy z OPS/MOPS, a nie jako gwarancja decyzji.
 
+## Scenariusze
 
-Licencja
-MIT — możesz używać, modyfikować i rozpowszechniać bez ograniczeń, z zachowaniem informacji o autorze.
+- Best case: pozytywne rozpatrzenie najsilniejszych przesłanek zwolnienia i najniższy sensowny udział rodziny.
+- Bazowy: ustawowa zdolność płatnicza bez uznaniowych zwolnień.
+- Worst case: brak uznaniowego zwolnienia; opcjonalnie ryzyko proceduralne przy braku wywiadu/umowy.
 
-Autor
-Łukasz Białobrzewski
-Projekt: kalkulator-dps.pl
-Kontakt: [l.bialobrzewski@gmail.com]
+## SEO
+
+Wdrożone elementy:
+
+- unikalny title i meta description,
+- canonical URL,
+- Open Graph,
+- JSON-LD `WebApplication` i `FAQPage`,
+- treści odpowiadające na frazy: `kalkulator DPS`, `odpłatność DPS`, `ile płaci rodzina za DPS`, `zwolnienie z opłaty DPS`,
+- szybki frontend bez zewnętrznych fontów i bibliotek.
+
+Rekomendacje po wdrożeniu produkcyjnym:
+
+- dodać statyczne podstrony poradnikowe: `kto płaci za DPS`, `zwolnienie z opłaty DPS`, `art. 64a DPS`, `odwołanie od decyzji OPS`,
+- dodać sitemap.xml i robots.txt,
+- dodać przykłady lokalne z kosztami DPS według województw po ich ręcznej weryfikacji,
+- mierzyć konwersję kliknięć: drukuj wynik, kopiuj JSON, dodaj osobę, wczytaj przykład.
+
+## Konwersja
+
+Wersja 2.0 prowadzi użytkownika od danych do wyniku bez landing page'a. Najważniejsze mechanizmy konwersyjne:
+
+- wynik live bez przeładowania strony,
+- przykład danych do natychmiastowego zrozumienia narzędzia,
+- jasny podział: mieszkaniec, rodzina, gmina,
+- scenariusze best/worst case,
+- interpretacja sytuacji i konkretne argumenty do wniosku,
+- eksport JSON do konsultacji lub dalszej analizy.
+
+## Uruchomienie
+
+To statyczna aplikacja. Można otworzyć `index.html` bez serwera lokalnego.
+
+## API
+
+`openapi.yaml` opisuje przyszły endpoint `POST /v2/calculate`, który przyjmuje dane wejściowe kalkulatora i zwraca:
+
+- opłatę mieszkańca,
+- wkład osób zobowiązanych,
+- udział gminy,
+- scenariusze,
+- scoring,
+- interpretację.
+
+## Ryzyka i TODO
+
+- Uznaniowe zwolnienia zależą od praktyki konkretnego OPS/MOPS i dokumentów.
+- Kalkulator nie pobiera automatycznie lokalnych średnich kosztów DPS z BIP.
+- Warto dodać testy jednostkowe dla silnika po przeniesieniu go do modułu backendowego.
+- Przed produkcją warto wykonać recenzję prawną przez radcę prawnego lub specjalistę pomocy społecznej.
+
+## Zastrzeżenie
+
+Projekt ma charakter informacyjny i edukacyjny. Nie jest poradą prawną, decyzją administracyjną ani gwarancją zwolnienia z opłaty.
