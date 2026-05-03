@@ -1,0 +1,331 @@
+openapi: 3.1.0
+info:
+  title: Kalkulator DPS API
+  version: 2.0.0
+  summary: API do obliczania odpłatności za pobyt w domu pomocy społecznej.
+  description: >
+    Specyfikacja przyszłego API dla Kalkulatora DPS 2.0. API zwraca ustawowy
+    podział odpłatności, scenariusze best/worst case, scoring sytuacji i
+    heurystyczną szansę zwolnienia. Wynik ma charakter edukacyjny.
+servers:
+  - url: https://api.kalkulator-dps.pl
+    description: Produkcja
+  - url: http://localhost:3000
+    description: Lokalnie
+paths:
+  /v2/health:
+    get:
+      summary: Status API
+      operationId: getHealth
+      responses:
+        "200":
+          description: API działa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /v2/legal-basis:
+    get:
+      summary: Aktualne stałe prawne używane przez kalkulator
+      operationId: getLegalBasis
+      responses:
+        "200":
+          description: Lista progów, wersja podstawy prawnej i źródła.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalBasisResponse"
+  /v2/calculate:
+    post:
+      summary: Oblicz odpłatność za DPS
+      operationId: calculateDpsFee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculationRequest"
+            examples:
+              standard:
+                summary: Dwoje zstępnych i mieszkaniec z emeryturą
+                value:
+                  year: 2026
+                  dpsCost: 7200
+                  resident:
+                    income: 2600
+                    therapeuticIncome: 0
+                    veteranStatus: false
+                  evidenceQuality: strong
+                  noInterviewRisk: false
+                  obligatedPeople:
+                    - relation: descendant
+                      income: 5600
+                      householdType: single
+                      members: 1
+                      flags:
+                        severeCircumstances: true
+                        seriousFamilyBreach: true
+                    - relation: descendant
+                      income: 8200
+                      householdType: family
+                      members: 4
+                      flags:
+                        pregnancyOrSingleParent: true
+      responses:
+        "200":
+          description: Wynik kalkulacji.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalculationResponse"
+        "400":
+          description: Niepoprawne dane wejściowe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        version:
+          type: string
+          example: 2.0.0
+    LegalBasisResponse:
+      type: object
+      required: [checkedAt, thresholds, sources]
+      properties:
+        checkedAt:
+          type: string
+          format: date
+          example: 2026-05-03
+        thresholds:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/IncomeThreshold"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/LegalSource"
+    LegalSource:
+      type: object
+      required: [title, url]
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+    IncomeThreshold:
+      type: object
+      required: [single, family]
+      properties:
+        single:
+          type: number
+          example: 1010
+        family:
+          type: number
+          example: 823
+    CalculationRequest:
+      type: object
+      required: [year, dpsCost, resident, obligatedPeople]
+      properties:
+        year:
+          type: integer
+          enum: [2024, 2025, 2026]
+        dpsCost:
+          type: number
+          minimum: 0
+          description: Średni miesięczny koszt utrzymania mieszkańca w DPS.
+        resident:
+          $ref: "#/components/schemas/ResidentInput"
+        obligatedPeople:
+          type: array
+          items:
+            $ref: "#/components/schemas/ObligatedPersonInput"
+        evidenceQuality:
+          type: string
+          enum: [none, basic, strong]
+          default: basic
+        noInterviewRisk:
+          type: boolean
+          default: false
+    ResidentInput:
+      type: object
+      required: [income]
+      properties:
+        income:
+          type: number
+          minimum: 0
+        therapeuticIncome:
+          type: number
+          minimum: 0
+          default: 0
+          description: Część dochodu objęta obniżeniem podstawy naliczenia opłaty.
+        veteranStatus:
+          type: boolean
+          default: false
+          description: Potencjalna przesłanka z art. 64b.
+    ObligatedPersonInput:
+      type: object
+      required: [relation, income, householdType, members]
+      properties:
+        relation:
+          type: string
+          enum: [spouse, descendant, ascendant, voluntary]
+        income:
+          type: number
+          minimum: 0
+          description: Dochód netto gospodarstwa.
+        householdType:
+          type: string
+          enum: [single, family]
+        members:
+          type: integer
+          minimum: 1
+        flags:
+          $ref: "#/components/schemas/ExemptionFlags"
+    ExemptionFlags:
+      type: object
+      properties:
+        mandatoryParentalAuthority:
+          type: boolean
+          default: false
+        mandatoryCrime:
+          type: boolean
+          default: false
+        paysOtherCare:
+          type: boolean
+          default: false
+        severeCircumstances:
+          type: boolean
+          default: false
+        oneIncome:
+          type: boolean
+          default: false
+        pregnancyOrSingleParent:
+          type: boolean
+          default: false
+        fosterCareOrLimitedAuthority:
+          type: boolean
+          default: false
+        alimentClaimDismissed:
+          type: boolean
+          default: false
+        seriousFamilyBreach:
+          type: boolean
+          default: false
+    CalculationResponse:
+      type: object
+      required: [resident, people, baseline, best, worst, interpretation]
+      properties:
+        resident:
+          $ref: "#/components/schemas/ResidentResult"
+        people:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonResult"
+        baseline:
+          $ref: "#/components/schemas/ScenarioResult"
+        best:
+          $ref: "#/components/schemas/ScenarioResult"
+        worst:
+          $ref: "#/components/schemas/ScenarioResult"
+        interpretation:
+          type: array
+          items:
+            type: string
+    ResidentResult:
+      type: object
+      required: [income, adjustedIncome, fee, retainedIncome, gap]
+      properties:
+        income:
+          type: number
+        adjustedIncome:
+          type: number
+        therapeuticReduction:
+          type: number
+        fee:
+          type: number
+        retainedIncome:
+          type: number
+        gap:
+          type: number
+        coversFull:
+          type: boolean
+    PersonResult:
+      type: object
+      required: [id, relation, income, floor, capacity, contribution, exemption]
+      properties:
+        id:
+          type: integer
+        relation:
+          type: string
+        income:
+          type: number
+        householdType:
+          type: string
+        members:
+          type: integer
+        floor:
+          type: number
+        thresholdPerPerson:
+          type: number
+        capacity:
+          type: number
+        contribution:
+          type: number
+        exemption:
+          $ref: "#/components/schemas/ExemptionAssessment"
+    ExemptionAssessment:
+      type: object
+      required: [score, reliefShare, label, reasons]
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        chance:
+          type:
+            - integer
+            - "null"
+          minimum: 0
+          maximum: 100
+        reliefShare:
+          type: number
+          minimum: 0
+          maximum: 1
+        label:
+          type: string
+        reasons:
+          type: array
+          items:
+            type: string
+    ScenarioResult:
+      type: object
+      required: [resident, family, municipality]
+      properties:
+        resident:
+          type: number
+        family:
+          type: number
+        municipality:
+          type: number
+        total:
+          type: number
+        note:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: validation_error
+        message:
+          type: string
